@@ -1,2 +1,2 @@
-from file_model import FileModel
-from upload_model import UploadModel
+from models.file_model import FileModel
+from models.upload_model import UploadModel
