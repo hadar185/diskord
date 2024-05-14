@@ -20,12 +20,10 @@ class DiscordClient:
     def run_client(self, token: str) -> None:
         threading.Thread(target=self.start_discord_bot, args=(token,), daemon=True).start()
 
-    async def upload_file(self, file: UploadFile, channel_id: int) -> str:
-        logger.info(f"Sending file to Discord: {file.filename}")
+    async def upload_file(self, path: str, file_name: str, channel_id: int) -> str:
+        logger.info(f"Sending file to Discord: {path}")
         channel = self._client.get_channel(channel_id)
-        with open(file.filename, "wb") as f:
-            f.write(await file.read())
-        discord_file = File(file.filename, filename=file.filename)
+        discord_file = File(path, filename=file_name)
         future = asyncio.run_coroutine_threadsafe(channel.send(file=discord_file), self._client.loop)
         message = future.result()
         return message.attachments[0].url
