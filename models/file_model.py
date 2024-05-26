@@ -4,5 +4,5 @@ from pydantic import BaseModel
 
 class FileModel(BaseModel):
     id: Optional[int] = None
-    url: str
+    message_id: int
     upload_id: int

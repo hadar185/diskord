@@ -47,28 +47,28 @@ async def root() -> Dict[str, str]:
     return {"message": "Hello World"}
 
 
-def get_upload_urls(upload_id: int) -> List[str]:
+async def get_upload_urls(upload_id: int) -> List[str]:
     file_models = database_manager.select('files', FileModel, Conditions(upload_id=upload_id), row_limit=100)
-    return [file_model.url for file_model in file_models]
+    return [await discord_client.fetch_attachment_url(file_model.message_id, CHANNEL_ID) for file_model in file_models]
 
 
 @app.get("/upload/{upload_id}")
 async def get_upload_files(upload_id: int) -> Dict[str, List[str]]:
-    return {"urls": get_upload_urls(upload_id)}
+    return {"urls": await get_upload_urls(upload_id)}
 
 
 @app.get("/collection/{collection_id}")
 async def get_collection_files(collection_id: int) -> Dict[int, List[str]]:
     upload_models = database_manager.select('uploads', UploadModel, Conditions(collection_id=collection_id),
                                             row_limit=100)
-    return {upload_model.id: get_upload_urls(upload_model.id) for upload_model in upload_models}
+    return {upload_model.id: await get_upload_urls(upload_model.id) for upload_model in upload_models}
 
 
 async def upload_file_parts(file: UploadFile, upload_id: int) -> None:
     async for part_path in split_file(file):
-        url = await discord_client.upload_file(part_path, file.filename, CHANNEL_ID)
+        message_id = await discord_client.upload_file(part_path, file.filename, CHANNEL_ID)
         delete_file(part_path)
-        file_model = FileModel(url=url, upload_id=upload_id)
+        file_model = FileModel(message_id=message_id, upload_id=upload_id)
         database_manager.insert('files', file_model)
 
 
