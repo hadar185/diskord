@@ -3,7 +3,7 @@ import logging
 
 from typing import Dict, List
 from datetime import datetime
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
 from utils import split_file, delete_file
@@ -19,7 +19,10 @@ app = FastAPI()
 
 origins = [
     "http://localhost:8081",
-    "http://10.100.102.15:8081"
+    "https://localhost:8081",
+    "http://localhost:8082",
+    "http://10.100.102.3:8081",
+    "http://10.100.102.3:8082"
 ]
 
 app.add_middleware(
@@ -35,7 +38,7 @@ CHANNEL_ID = int(os.environ.get('CHANNEL_ID'))
 
 
 discord_client = DiscordClient()
-discord_client.run_client(CLIENT_TOKEN)
+discord_client.start_discord_bot(CLIENT_TOKEN)
 
 database_manager = DatabaseManager()
 database_manager.connect("diskord.db")
@@ -73,9 +76,9 @@ async def upload_file_parts(file: UploadFile, upload_id: int) -> None:
 
 
 @app.post("/upload/")
-async def create_upload_file(file: UploadFile) -> Dict[str, str]:
+async def create_upload_file(file: UploadFile = File(...)) -> Dict[str, str]:
     logger.info(f"uploading {file.filename}")
-    upload = UploadModel(user_id='1', size=file.size, upload_time=datetime.now())
+    upload = UploadModel(user_id='1', size=file.size, upload_time=datetime.now(), collection_id=2)
     result = database_manager.insert('uploads', upload)
     upload_id = int(result.lastrowid)
     await upload_file_parts(file, upload_id)
